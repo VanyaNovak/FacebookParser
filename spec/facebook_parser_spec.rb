@@ -1,27 +1,27 @@
 require "spec_helper"
 require "./facebook_parser"
-require 'faker'
 
 describe FacebookParser do
   describe "#contacts_list" do
-    subject { FacebookParser.new("email", "somepass").contacts_list }
+    subject { FacebookParser.new("email", "somepass") }
 
     context "when credentials invalid" do
       it "returns not authorized" do
-        expect(subject).to eq "authorization failed"
+        parser = subject
+
+        expect(parser.contacts_list).to eq nil
+        expect(parser.session.current_url).to include FacebookParser::FACEBOOK_URI
+        expect(parser.authorized).to eq false
       end
     end
 
     context "when authorized" do
       let(:collected_names) do
-        10.times.map do
-          Faker::Name.name
-        end
-      end
-
-      let(:file_path) { "data.csv" }
-      let(:csv) do
-        CSV.open(file_path)
+        [
+          "Ivan Novak",
+          "John Doe",
+          "Mike Peterson"
+        ]
       end
 
       before do
@@ -29,20 +29,23 @@ describe FacebookParser do
         allow_any_instance_of(FacebookParser).to receive(:collect_names).and_return(collected_names)
       end
 
-      after do
-        File.delete(file_path)
+      it "returns correct data" do
+        parser = subject
+
+        parser.contacts_list
+
+        expect(parser.authorized).to eq true
+        expect(File.exist?('data.csv')).to eq true
+        expect(CSV.open("data.csv", "r").to_a.flatten).to eq collected_names
       end
 
-      it "generates csv file" do
-        subject
+      context "when contacts does not exists" do
+        let(:collected_names) { nil }
 
-        expect(csv.to_a.flatten).to match_array(
-          collected_names.each do |name|
-            name
-          end
-        )
+        it "returns nil" do
+          expect(subject.contacts_list).to eq nil
+        end
       end
-
     end
   end
 end
