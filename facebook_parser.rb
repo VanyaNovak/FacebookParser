@@ -12,6 +12,7 @@ class FacebookParser
   FACEBOOK_URI = "https://www.facebook.com/"
   DEFAULT_CONTACTS_COUNT = 20
   CSV_FILE = "data.csv"
+  TRANSLATIONS = %w[Contacts Контакты]
 
   def initialize(email, password)
     @email = email
@@ -28,10 +29,14 @@ class FacebookParser
   private
 
   def collect_names
-    if has_element?("//*[contains(text(), 'Контакты')]")
-      names = @session.find_all(:xpath, "//*[contains(@class, 'xwib8y2 x1y1aw1k')]//*[contains(@role, 'link')]//*[contains(@class, 'xvq8zen') and contains(@dir, 'auto')]").map(&:text)
-      names.select { |i| i.match(/^([a-zA-Z0-9ҐЄІЇА-Яа-я]+\s)[a-zA-Z0-9ҐЄІЇА-Яа-я]+$/) }
+    TRANSLATIONS.each do |translation|
+      if has_element?("//*[contains(text(), '#{translation}')]")
+        names = find_element(:xpath, "//*[contains(text(), '#{translation}')]/../../../../../../../../../../..").text
+        return names.split("\n").select { |i| i.match(/([A-ZҐЄІЇА-Я][A-Za-zҐЄІЇґєіїА-я]+\s)([A-ZҐЄІЇА-Я][A-Za-zҐЄІЇґєіїА-я]+)$/) }
+      end
     end
+
+    nil
   end
 
   def export_data(data)
