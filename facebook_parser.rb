@@ -30,8 +30,8 @@ class FacebookParser
 
   def collect_names
     TRANSLATIONS.each do |translation|
-      if has_element?("//*[contains(text(), '#{translation}')]")
-        names = @session.find_all(:xpath, "//*[contains(.//span, '#{translation}')]").map(&:text)
+      if has_element?("//span[contains(text(), '#{translation}')]")
+        names = @session.find_all(:xpath, "//div[contains(.//span, '#{translation}')]").map(&:text)
         return names.join("\n").split("\n").select { |i| i.match(/([\p{Letter}]+\s?\b){2,}/) }.uniq
       end
     end
@@ -54,7 +54,7 @@ class FacebookParser
     find_element(:xpath, "//input[@id='pass']").set(@password)
     find_element(:xpath, "//button[contains(@name, 'login')]").click
 
-    return false if has_element?("//*[contains(@id, 'error_box')]") || has_element?("//*[contains(@aria-labelledby, 'Assistive Identification')]")
+    return false if has_element?("//div[contains(@id, 'error_box')]") || has_element?("//div[contains(@aria-labelledby, 'Assistive Identification')]")
 
     true
   end
